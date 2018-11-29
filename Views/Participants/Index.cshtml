@@ -1,0 +1,50 @@
+﻿@model IEnumerable<SecretSantaWeb.Models.Participant>
+
+@{
+    ViewBag.Title = "Участники";
+}
+
+<h2>Список участников</h2>
+
+<p>
+    @Html.ActionLink("Добавить участника", "Create")
+</p>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.ID)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Name)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Surname)
+        </th>
+
+        <th></th>
+    </tr>
+
+    @foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.ID)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Surname)
+            </td>
+
+            <td>
+                @Html.ActionLink("редактировать", "Edit", new {id = item.ID}) |
+                @Html.ActionLink("детали", "Details", new {id = item.ID}) |
+                @Html.ActionLink("удалить", "Delete", new {id = item.ID})
+            </td>
+        </tr>
+    }
+</table>
+
+@section Scripts {
+            @Scripts.Render("~/bundles/jqueryval")
+        }
