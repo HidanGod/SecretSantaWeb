@@ -21,19 +21,9 @@ namespace SecretSantaWeb.Controllers
             return View(db.Participants.ToList());
         }
 
-        // 
-        // GET: /SecretSantaDictionary/Create/ 
-
-        public ActionResult Create(int countParticipant = 1)
-        {
-            ViewBag.Message = "Hello ";
-            ViewBag.Participants = countParticipant;
-
-            return View(db.Participants.ToList());
-        }
 
         // GET: Participants/Edit/5
-        public ActionResult Bestowed(int? id)
+        public ActionResult Victim(int? id)
         {
             if (id == null)
             {
@@ -64,6 +54,14 @@ namespace SecretSantaWeb.Controllers
 
             return View(bestowed);
         }
-
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Index([Bind(Include = "ID,Name,Surname,Password")] Participant participant)
+        {
+            var participantOriginal = db.Participants.Find(participant.ID);
+            if(participantOriginal.Password == participant.Password)
+                return RedirectToAction("Victim", "SecretSanta", new { id = participant.ID});
+            return View(db.Participants.ToList());
+        }
     }
 }
