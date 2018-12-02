@@ -16,7 +16,7 @@ namespace SecretSantaWeb
             routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
-                defaults: new { controller = "SecretSanta", action = "Index", id = UrlParameter.Optional }
+                defaults: new { controller = "Groups", action = "Index", id = UrlParameter.Optional }
             );
 
             routes.MapRoute(

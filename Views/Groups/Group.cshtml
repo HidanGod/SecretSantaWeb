@@ -1,0 +1,26 @@
+﻿@model SecretSantaWeb.Models.Group
+
+<tr>
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+        <td>
+            @Html.HiddenFor(model => model.GroupId, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.DisplayFor(model => model.GroupId, new { htmlAttributes = new { @class = "form-control" } })
+        </td>
+
+        <td>
+            @Html.DisplayFor(model => model.Title, new { htmlAttributes = new { @class = "form-control" } })
+        </td>
+        <td>
+            @Html.PasswordFor(model => model.Password, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
+        </td>
+        <td>
+            <button name="action" value="View">Просмотр</button>
+            <button name="action" value="Delete">Удалиь</button>
+        </td>
+
+    }
+</tr>
+

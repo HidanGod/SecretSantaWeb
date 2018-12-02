@@ -1,0 +1,44 @@
+﻿@model SecretSantaWeb.Models.Participant
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+    ViewBag.Title = "Victim";
+}
+
+<h2>Жертва</h2>
+
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>Ваша жертва Это</h4>
+
+        <table class="table">
+            <tr>
+                <th>
+                    @Html.DisplayFor(model => model.ParticipantId)
+                </th>
+                <th>
+                    @Html.DisplayFor(model => model.Name)
+                </th>
+                <th>
+                    @Html.DisplayFor(model => model.Surname)
+                </th>
+
+                <th></th>
+            </tr>
+        </table>
+    </div>
+}
+
+    <div>
+        <a class="ImageBtn" href="previous.html" onClick="history.back();return false;">Вернуться к списку участников</a>
+    </div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

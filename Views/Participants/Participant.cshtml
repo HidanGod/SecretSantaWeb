@@ -1,0 +1,35 @@
+﻿@model SecretSantaWeb.Models.Participant
+
+<tr>
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+        <td>
+            @Html.HiddenFor(model => model.ParticipantId, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.DisplayFor(model => model.ParticipantId, new { htmlAttributes = new { @class = "form-control" } })
+        </td>
+
+        <td>
+            @Html.HiddenFor(model => model.Name, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.DisplayFor(model => model.Name, new {htmlAttributes = new {@class = "form-control"}})
+        </td>
+        <td>
+            @Html.HiddenFor(model => model.Surname, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.DisplayFor(model => model.Surname, new {htmlAttributes = new {@class = "form-control"}})
+        </td>
+        <td>
+          
+            @Html.PasswordFor(model => model.Password, new {htmlAttributes = new {@class = "form-control"}})
+            @Html.ValidationMessageFor(model => model.Password, "", new {@class = "text-danger"})
+        </td>
+        <td>
+            @Html.HiddenFor(model => model.GroupId, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.HiddenFor(model => model.Group, new { htmlAttributes = new { @class = "form-control" } })
+            <button name="action" value="Discover">узнать</button>
+            <button name="action" value="Delete">Удалить</button>
+
+        </td>
+
+    }
+</tr>
+

@@ -19,7 +19,7 @@ using System.Runtime.InteropServices;
 // COM, задайте атрибуту ComVisible значение true для требуемого типа.
 [assembly: ComVisible(false)]
 
-// Следующий GUID служит для ID библиотеки типов typelib, если этот проект видим для COM
+// Следующий GUID служит для GroupId библиотеки типов typelib, если этот проект видим для COM
 [assembly: Guid("23e006b8-1e99-45c9-89f8-edcb4a1af420")]
 
 // Сведения о версии сборки состоят из указанных ниже четырех значений:

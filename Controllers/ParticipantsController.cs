@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Mvc;
+using System.Windows.Forms;
 using SecretSantaWeb.Models;
 
 namespace SecretSantaWeb.Controllers
@@ -15,24 +16,70 @@ namespace SecretSantaWeb.Controllers
         private SecretSantaDBContext db = new SecretSantaDBContext();
 
         // GET: Participants
-        public ActionResult Index()
+        public ActionResult Index(int? id, string password)
         {
-            return View(db.Participants.ToList());
+            return GetListParticipantGroup(id, password);
         }
 
-        // GET: Participants/Details/5
-        public ActionResult Details(int? id)
+        // GET: Participants
+        // POST: Participants/Delete/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Index([Bind(Include = "ParticipantId, Name, Surname, Password, GroupId, Group")] Participant participantPost, string action)
         {
-            if (id == null)
+            //MessageBox.Show($"{participantPost.GroupId.ToString()} ид {participantPost.Password} ид {participantPost.Surname}");
+            // MessageBox.Show(participantPost.GroupId.ToString() + participantPost.Group.GroupId.ToString());
+            if (action == "Create") return CreateAction(participantPost); 
+            var id = participantPost.ParticipantId;
+            var participantOriginal = db.Participants.Find(id);
+            if (participantOriginal == null) return RedirectToAction("Index", "Groups");
+            if (participantOriginal.Password == participantPost.Password)
             {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+                return action == "Delete" ? DeleteAction(participantOriginal, id) : DiscoverAction(participantOriginal); 
             }
-            Participant participant = db.Participants.Find(id);
-            if (participant == null)
+            participantPost.Group = db.Groups.Find(participantPost.GroupId);
+            return GetListParticipantGroup(participantPost.GroupId, participantPost.Group.Password);
+        }
+
+        public ActionResult DeleteAction(Participant participantOriginal, int id)
+        {
+            var secretSanta = db.Participants.FirstOrDefault(x => x.BestowedParticipantId == id);
+            if (secretSanta != null)
             {
-                return HttpNotFound();
+                secretSanta.BestowedParticipant = null;
+                secretSanta.BestowedParticipantId = null;
+                db.Entry(secretSanta).State = EntityState.Modified;
             }
-            return View(participant);
+            db.Participants.Remove(participantOriginal);
+            db.SaveChanges();
+            return RedirectToAction("Index");
+        }
+
+        public ActionResult DiscoverAction(Participant participantPost)
+        {
+            return RedirectToAction("Victim", "Participants", new { id = participantPost.ParticipantId });
+        }
+
+        public ActionResult CreateAction(Participant participant)
+        {
+            participant.Group = db.Groups.Find(participant.GroupId);
+
+            db.Participants.Add(participant);
+                db.SaveChanges();
+            
+
+            return GetListParticipantGroup(participant.GroupId, participant.Group.Password);
+        }
+
+        public ActionResult GetListParticipantGroup(int? id, string password)
+        {
+            var participants = db.Participants.Include(p => p.BestowedParticipant).Include(p => p.Group);
+            var gr = db.Groups.Where(x => x.GroupId == id).Include(p => p.Participants).FirstOrDefault(x => x.Password == password);
+            var model = db.Groups.Where(x => x.GroupId == id).FirstOrDefault(x => x.Password == password);
+                if (model == null) return View("Index");
+            var listParticipant = db.Participants.Where(x => x.GroupId == id).ToList();
+            model.Participants = listParticipant;
+            return View("Index", gr);
         }
 
         // GET: Participants/Create
@@ -46,7 +93,7 @@ namespace SecretSantaWeb.Controllers
         // сведения см. в статье https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "ID,Name,Surname,Password")] Participant participant)
+        public ActionResult Create([Bind(Include = "ParticipantId,Name,Surname,Password")] Participant participant)
         {
             if (ModelState.IsValid)
             {
@@ -58,52 +105,7 @@ namespace SecretSantaWeb.Controllers
             return View(participant);
         }
 
-        // GET: Participants/Edit/5
-        public ActionResult Edit(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Participant participant = db.Participants.Find(id);
-            if (participant == null)
-            {
-                return HttpNotFound();
-            }
-            return View(participant);
-        }
 
-      
-        // POST: Participants/Edit/5
-        // Чтобы защититься от атак чрезмерной передачи данных, включите определенные свойства, для которых следует установить привязку. Дополнительные 
-        // сведения см. в статье https://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "ID,Name,Surname,Password")] Participant participant)
-        {
-            if (ModelState.IsValid)
-            {
-                db.Entry(participant).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
-            }
-            return View(participant);
-        }
-
-        // GET: Participants/Delete/5
-        public ActionResult Delete(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Participant participant = db.Participants.Find(id);
-            if (participant == null)
-            {
-                return HttpNotFound();
-            }
-            return View(participant);
-        }
 
         // POST: Participants/Delete/5
         [HttpPost, ActionName("Delete")]
@@ -122,6 +124,40 @@ namespace SecretSantaWeb.Controllers
             db.SaveChanges();
             return RedirectToAction("Index");
         }
+
+        // GET: Participants/Edit/5
+        public ActionResult Victim(int? id)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+
+            var bestowed = db.Participants.Find(id);
+            var participanHaveNotBestowed = db.Participants.FirstOrDefault(x => x.BestowedParticipant == null);
+            if (bestowed == null || participanHaveNotBestowed != null)
+            {
+                var participans = db.Participants.ToArray();
+                var countParticipans = participans.Length;
+                var randomNumsSant = SecretSanta.GeneratorRandomSant.GenerateRandomNumsSant(countParticipans);
+                for (int i = 0; i < countParticipans; i++)
+                {
+                    participans[i].BestowedParticipant = participans[randomNumsSant[i]];
+                    participans[i].BestowedParticipantId = participans[randomNumsSant[i]].ParticipantId;
+                }
+
+                foreach (var participant in participans)
+                {
+                    db.Entry(participant).State = EntityState.Modified;
+                }
+
+                db.SaveChanges();
+            }
+            bestowed = db.Participants.FirstOrDefault(x => x.BestowedParticipantId == id);
+
+            return View(bestowed);
+        }
+
 
         protected override void Dispose(bool disposing)
         {

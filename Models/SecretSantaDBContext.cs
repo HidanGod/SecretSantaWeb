@@ -7,7 +7,7 @@ namespace SecretSantaWeb.Models
     public class SecretSantaDBContext : DbContext
     {
         public DbSet<Participant> Participants { get; set; }
-
+        public DbSet<Group> Groups { get; set; }
     }
 
 
