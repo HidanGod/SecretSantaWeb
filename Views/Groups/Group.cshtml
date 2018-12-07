@@ -13,12 +13,16 @@
             @Html.DisplayFor(model => model.Title, new { htmlAttributes = new { @class = "form-control" } })
         </td>
         <td>
-            @Html.PasswordFor(model => model.Password, new { htmlAttributes = new { @class = "form-control" } })
-            @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
+            @Html.PasswordFor(model => model.PasswordView, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.ValidationMessageFor(model => model.PasswordView, "", new { @class = "text-danger" })
+        </td>
+        <td>
+            @Html.PasswordFor(model => model.PasswordDelete, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.ValidationMessageFor(model => model.PasswordDelete, "", new { @class = "text-danger" })
         </td>
         <td>
             <button name="action" value="View">Просмотр</button>
-            <button name="action" value="Delete">Удалиь</button>
+            <button name="action" value="Delete">Удалить</button>
         </td>
 
     }

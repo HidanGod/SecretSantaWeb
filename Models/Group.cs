@@ -14,10 +14,12 @@ namespace SecretSantaWeb.Models
         [Key]
         [DisplayName("ID")]
         public int GroupId { get; set; }
-        [DisplayName("Группа")]
+        [DisplayName("Название")]
         public string Title { get; set; }
-        [DisplayName("Пароль")]
-        public string Password { get; set; }
+        [DisplayName("Пароль для просмотра")]
+        public string PasswordView { get; set; }
+        [DisplayName("Пароль для удаления")]
+        public string PasswordDelete { get; set; }
         [DisplayName("Участники")]
         public ICollection<Participant> Participants { get; set; }
         public Group()

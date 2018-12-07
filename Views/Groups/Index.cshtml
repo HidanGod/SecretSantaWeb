@@ -1,13 +1,10 @@
 ﻿@model IEnumerable<SecretSantaWeb.Models.Group>
 
-@{
-    ViewBag.Title = "Index";
-}
 
-<h2>Index</h2>
+
 
 <p>
-    @Html.ActionLink("Создать", "Create")
+    @Html.ActionLink("Создать группу", "Create")
 </p>
 <h2>Secret Group Satan </h2>
 <table class="table">
@@ -19,7 +16,10 @@
             @Html.DisplayNameFor(model => model.Title)
         </th>
         <th>
-            @Html.DisplayNameFor(model => model.Password)
+            @Html.DisplayNameFor(model => model.PasswordView)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.PasswordDelete)
         </th>
         <th></th>
     </tr>

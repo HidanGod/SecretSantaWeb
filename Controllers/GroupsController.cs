@@ -17,17 +17,45 @@ namespace SecretSantaWeb.Controllers
         // GET: Groups
         public ActionResult Index()
         {
+            ViewData["Message"] = "Приветствую пользователь!";
             return View(db.Groups.ToList());
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Index([Bind(Include = "GroupId,Title,Password")] Group group, string action)
+        public ActionResult Index([Bind(Include = "GroupId,Title,PasswordView,PasswordDelete")] Group group, string action)
         {
+            var message = "Приветствую пользователь!";
             var groupOriginal = db.Groups.Find(group.GroupId);
-            if (groupOriginal != null && groupOriginal.Password == group.Password)
-                return action != "Delete" ? RedirectToAction("Index", "Participants", new { id = group.GroupId, password = group.Password}) : DeleteAction(groupOriginal);
+            if (groupOriginal == null) return View(db.Groups.ToList());
+            switch (action)
+            {
+                case "Delete":
+                {
+                    message = "Введите коректный пароль для удаления";
+                    if (groupOriginal.PasswordDelete == @group.PasswordDelete)
+                        return DeleteAction(groupOriginal);
+                    break;
+                }
+                case "View":
+                {
+                    message = "Ведите коректный пароль для просмотра";
+                    if (groupOriginal.PasswordView == @group.PasswordView)
+                        return ViewAction(groupOriginal);
+                    break;
+                }
+            }
+
+            ViewData["Message"] = message;
             return View(db.Groups.ToList());
         }
+
+        public ActionResult ViewAction(Group groupOriginal)
+        {
+           
+            return RedirectToAction("Index", "Participants", new { id = groupOriginal.GroupId, password = groupOriginal.PasswordView });
+        }
+
         public ActionResult DeleteAction(Group groupOriginal)
         {
             var participantsGroup = db.Participants.Where(x => x.GroupId == groupOriginal.GroupId);
@@ -42,31 +70,17 @@ namespace SecretSantaWeb.Controllers
                     db.Entry(secretSatan).State = EntityState.Modified;
                 }
                 db.Participants.Remove(participant);
-               // db.SaveChanges();
             }
             db.Groups.Remove(groupOriginal);
             db.SaveChanges();
+          
             return RedirectToAction("Index");
         }
 
-        // GET: Groups/Details/5
-        public ActionResult Details(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Group group = db.Groups.Find(id);
-            if (group == null)
-            {
-                return HttpNotFound();
-            }
-            return View(group);
-        }
 
-        // GET: Groups/Create
         public ActionResult Create()
         {
+            ViewData["Message"] = "Cоздай свою группу Secret Satan";
             return View();
         }
 
@@ -75,7 +89,7 @@ namespace SecretSantaWeb.Controllers
         // сведения см. в статье https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "GroupId,Title,Password")] Group group)
+        public ActionResult Create([Bind(Include = "GroupId,Title,PasswordView,PasswordDelete")] Group group)
         {
             if (ModelState.IsValid)
             {
@@ -87,62 +101,6 @@ namespace SecretSantaWeb.Controllers
             return View(group);
         }
 
-        // GET: Groups/Edit/5
-        public ActionResult Edit(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Group group = db.Groups.Find(id);
-            if (group == null)
-            {
-                return HttpNotFound();
-            }
-            return View(group);
-        }
-
-        // POST: Groups/Edit/5
-        // Чтобы защититься от атак чрезмерной передачи данных, включите определенные свойства, для которых следует установить привязку. Дополнительные 
-        // сведения см. в статье https://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "GroupId,Title,Password")] Group group)
-        {
-            if (ModelState.IsValid)
-            {
-                db.Entry(group).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
-            }
-            return View(group);
-        }
-
-        // GET: Groups/Delete/5
-        public ActionResult Delete(int? id)
-        {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Group group = db.Groups.Find(id);
-            if (group == null)
-            {
-                return HttpNotFound();
-            }
-            return View(group);
-        }
-
-        // POST: Groups/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id)
-        {
-            Group group = db.Groups.Find(id);
-            db.Groups.Remove(group);
-            db.SaveChanges();
-            return RedirectToAction("Index");
-        }
 
         protected override void Dispose(bool disposing)
         {

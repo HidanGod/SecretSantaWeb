@@ -6,6 +6,8 @@ namespace SecretSantaWeb.Models
 {
     public class SecretSantaDBContext : DbContext
     {
+        public SecretSantaDBContext() : base("DefaultConnection")
+        { }
         public DbSet<Participant> Participants { get; set; }
         public DbSet<Group> Groups { get; set; }
     }

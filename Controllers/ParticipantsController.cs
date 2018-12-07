@@ -18,17 +18,21 @@ namespace SecretSantaWeb.Controllers
         // GET: Participants
         public ActionResult Index(int? id, string password)
         {
-            return GetListParticipantGroup(id, password);
+            ViewData["Message"] = "Ваш список Secret Satan";
+            return id == null ? new HttpStatusCodeResult(HttpStatusCode.BadRequest) : GetListParticipantGroup(id, password);
         }
 
-        // GET: Participants
-        // POST: Participants/Delete/5
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Index([Bind(Include = "ParticipantId, Name, Surname, Password, GroupId, Group")] Participant participantPost, string action)
         {
-            //MessageBox.Show($"{participantPost.GroupId.ToString()} ид {participantPost.Password} ид {participantPost.Surname}");
-            // MessageBox.Show(participantPost.GroupId.ToString() + participantPost.Group.GroupId.ToString());
+            if (participantPost == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+
+            participantPost.Group = db.Groups.Find(participantPost.GroupId);
             if (action == "Create") return CreateAction(participantPost); 
             var id = participantPost.ParticipantId;
             var participantOriginal = db.Participants.Find(id);
@@ -37,12 +41,13 @@ namespace SecretSantaWeb.Controllers
             {
                 return action == "Delete" ? DeleteAction(participantOriginal, id) : DiscoverAction(participantOriginal); 
             }
-            participantPost.Group = db.Groups.Find(participantPost.GroupId);
-            return GetListParticipantGroup(participantPost.GroupId, participantPost.Group.Password);
+            ViewData["Message"] = "Введите корректный пароль";
+            return GetListParticipantGroup(participantPost.GroupId, participantPost.Group.PasswordView);
         }
 
         public ActionResult DeleteAction(Participant participantOriginal, int id)
         {
+            var group = db.Groups.FirstOrDefault(x => x.GroupId == participantOriginal.GroupId);
             var secretSanta = db.Participants.FirstOrDefault(x => x.BestowedParticipantId == id);
             if (secretSanta != null)
             {
@@ -52,94 +57,44 @@ namespace SecretSantaWeb.Controllers
             }
             db.Participants.Remove(participantOriginal);
             db.SaveChanges();
-            return RedirectToAction("Index");
+            ViewData["Message"] = $"Вы удалились из в группы:\"{group.Title}\"";
+            return GetListParticipantGroup(group.GroupId, group.PasswordView);
         }
 
         public ActionResult DiscoverAction(Participant participantPost)
         {
-            return RedirectToAction("Victim", "Participants", new { id = participantPost.ParticipantId });
+            return RedirectToAction("Victim", "Participants", new { id = participantPost.BestowedParticipantId});
         }
 
         public ActionResult CreateAction(Participant participant)
         {
-            participant.Group = db.Groups.Find(participant.GroupId);
-
-            db.Participants.Add(participant);
+           
+            //if (ModelState.IsValid)
+            {
+                db.Participants.Add(participant);
                 db.SaveChanges();
-            
-
-            return GetListParticipantGroup(participant.GroupId, participant.Group.Password);
+            }
+            ViewData["Message"] = $"Вы вступили в группу:\"{participant.Group.Title}\"";
+            return GetListParticipantGroup(participant.Group.GroupId, participant.Group.PasswordView);
         }
 
         public ActionResult GetListParticipantGroup(int? id, string password)
         {
-            var participants = db.Participants.Include(p => p.BestowedParticipant).Include(p => p.Group);
-            var gr = db.Groups.Where(x => x.GroupId == id).Include(p => p.Participants).FirstOrDefault(x => x.Password == password);
-            var model = db.Groups.Where(x => x.GroupId == id).FirstOrDefault(x => x.Password == password);
-                if (model == null) return View("Index");
-            var listParticipant = db.Participants.Where(x => x.GroupId == id).ToList();
-            model.Participants = listParticipant;
-            return View("Index", gr);
+            var model = db.Groups.Where(x => x.GroupId == id).Include(p => p.Participants).FirstOrDefault(x => x.PasswordView == password);
+            if (model == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            return View("Index", model);
         }
 
-        // GET: Participants/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Participants/Create
-        // Чтобы защититься от атак чрезмерной передачи данных, включите определенные свойства, для которых следует установить привязку. Дополнительные 
-        // сведения см. в статье https://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "ParticipantId,Name,Surname,Password")] Participant participant)
-        {
-            if (ModelState.IsValid)
-            {
-                db.Participants.Add(participant);
-                db.SaveChanges();
-                return RedirectToAction("Index");
-            }
-
-            return View(participant);
-        }
-
-
-
-        // POST: Participants/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id)
-        {
-            Participant participant = db.Participants.Find(id);
-            Participant secretSanta = db.Participants.FirstOrDefault(x => x.BestowedParticipantId == id);
-            if(secretSanta != null)
-            {
-                secretSanta.BestowedParticipant = null;
-                secretSanta.BestowedParticipantId = null;
-                db.Entry(secretSanta).State = EntityState.Modified;
-            }
-            db.Participants.Remove(participant);
-            db.SaveChanges();
-            return RedirectToAction("Index");
-        }
-
-        // GET: Participants/Edit/5
         public ActionResult Victim(int? id)
         {
-            if (id == null)
+            if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            var victim = db.Participants.Find(id);
+            var participans = db.Participants.Where(x => x.GroupId == victim.GroupId).ToArray();
+            var participanHaveNotVictim = participans.FirstOrDefault(x => x.BestowedParticipant == null);
+            if (victim == null || participanHaveNotVictim != null)
             {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-
-            var bestowed = db.Participants.Find(id);
-            var participanHaveNotBestowed = db.Participants.FirstOrDefault(x => x.BestowedParticipant == null);
-            if (bestowed == null || participanHaveNotBestowed != null)
-            {
-                var participans = db.Participants.ToArray();
                 var countParticipans = participans.Length;
-                var randomNumsSant = SecretSanta.GeneratorRandomSant.GenerateRandomNumsSant(countParticipans);
+                var randomNumsSant = GeneratorRandomSant.GenerateRandomNumsSant(countParticipans);
                 for (int i = 0; i < countParticipans; i++)
                 {
                     participans[i].BestowedParticipant = participans[randomNumsSant[i]];
@@ -150,14 +105,12 @@ namespace SecretSantaWeb.Controllers
                 {
                     db.Entry(participant).State = EntityState.Modified;
                 }
-
                 db.SaveChanges();
             }
-            bestowed = db.Participants.FirstOrDefault(x => x.BestowedParticipantId == id);
-
-            return View(bestowed);
+            victim = db.Participants.FirstOrDefault(x => x.BestowedParticipantId == id);
+            ViewData["Message"] = $"Ваша Жертва это {victim.Name} {victim.Surname}";
+            return View(victim);
         }
-
 
         protected override void Dispose(bool disposing)
         {
